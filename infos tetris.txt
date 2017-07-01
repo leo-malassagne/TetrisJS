@@ -1,0 +1,29 @@
+﻿10 cases de largeur et de 22 cases de hauteur
+
+Pièces:
+
+I 	rouge
+
+O 	bleu
+
+T 	brun
+
+L 	magenta
+
+J 	blanc
+
+Z 	cyan
+
+S 	vert
+
+
+Faire une seule ligne ne rapporte que 40 points, alors qu'en faire 2 en rapporte 100, 3 lignes rapportent 300 et 4 lignes
+(le maximum) en rapportent 1200. Le nombre de points est augmenté à chaque niveau selon l'équation f(p, n)= p(n+1) où p
+est le nombre de points au niveau 0 et n le niveau
+
+La vitesse de la chute des pièces est déterminée par le niveau auquel
+vous êtes. Plus le niveau est élevé, plus les pièces tombent vite. Au niveau 0 on peut faire 5-6 déplacements latéraux
+avant que la pièce tombe d'un rang, au niveau 9 on ne peut plus faire que 1-2 mouvements latéraux. Le niveau 15 équivaut
+au niveau de la vitesse à tout le temps appuyer sur la flèche du bas
+
+.
