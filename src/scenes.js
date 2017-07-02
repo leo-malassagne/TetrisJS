@@ -7,13 +7,18 @@ Crafty.scene('Game',
 		Crafty.s("Game", {
 			init: function() {
 				this.lineCount = 0;
-				this.playlist = [];
 				this.track = -1;
 				this.deleteCurrent = false;
 				this.bind('musicEnd', this.playNext);
 				this.bind("Land",function(e){
 					var loop, line, blocks, fullLines = 0, gain = 0;
 					for (line of e) {
+						if (line < 0) {
+							soundManager.stopAll();
+							this.destroy();
+							Crafty.scene("Lose");
+							return 0;
+						}
 						blocks = Crafty.raycast({_x: 8, _y: line}, {x: 1, y: 0}, 144, "Fixed");
 						if (blocks.length == 10) {
 							fullLines++;
@@ -37,6 +42,8 @@ Crafty.scene('Game',
 						this.lineCount = (this.lineCount + fullLines) % 10;
 						Crafty('Counter').get(1).add(1);
 					}
+					Crafty("Piece").get(0).construct(this.drawPiece());
+					Crafty("Piece").get(0).attr({x: 80, y: -32});
 				});
 				this.bind("EnterFrame",function(e){
 					if (e.frame % Math.round(50 / Crafty('Counter').get(1).value()) == 0) {
@@ -46,7 +53,7 @@ Crafty.scene('Game',
 				/*this.playlist.push('level'+Math.ceil(gameSpeed/5));
 				this.playlist.push('transition');
 				soundManager.play('intro');*/
-				soundManager.play('level1',);
+				soundManager.play('level1');
 				this.newRandGen();
 			},
 			playNext: function(){
@@ -68,9 +75,6 @@ Crafty.scene('Game',
 					line = Crafty.raycast({_x: 8, _y: base}, {x: 1, y: 0}, 144, "Fixed");
 				} while ((line.length > 0) && (base > 0));
 				console.log(base);
-				if (base < 0) {
-					Crafty.scene("Lose");
-				}
 				numLine = 16;
 				while (base - numLine > 0) {
 					line = Crafty.raycast({_x: 8, _y: base - numLine}, {x: 1, y: 0}, 144, "Fixed");
@@ -92,7 +96,7 @@ Crafty.scene('Game',
 					this.randGen[i] = i;
 				}
 				for (let i = 6; i > 0; i--) {
-					j = Math.floor(Math.random() * i);
+					j = Math.floor(Math.random() * (i + 1));
 					temp = this.randGen[i];
 					this.randGen[i] = this.randGen[j];
 					this.randGen[j] = temp;
@@ -103,7 +107,7 @@ Crafty.scene('Game',
 				if (this.randGen.length == 0) {
 					this.newRandGen();
 				}
-				if (this.randGen[7] == piece) {
+				if (this.randGen[6] == piece) {
 					i = Math.floor(Math.random() * 6);
 					temp = this.randGen[i];
 					this.randGen[i] = this.randGen[6];
@@ -126,13 +130,17 @@ Crafty.scene('Game',
 		.attr({x: 0, y: 352, w: 160, h: 16});
 	},
 	function() {
-		Crafty.s('Game').destroy();
 	}
 );
 
 Crafty.scene('SpeedSelect', function(){
-	var count = Crafty.e("Counter").value(5);
-	var selector = Crafty.e('2D, Canvas, Text, Inputs,');
+	var count = Crafty.e("Counter").value(5).setLimits(1,15);
+	var label = Crafty.e("2D, Text, Canvas")
+		.text("Choose speed")
+		.textAlign("center")
+		.textFont("size", "20px")
+		.attr({y: -25});
+	var selector = Crafty.e("2D, Inputs");
 	selector.setAction(Crafty.keys.LEFT_ARROW, function(){
 			console.log(this);
 			this.counter.add(-1);
@@ -141,6 +149,9 @@ Crafty.scene('SpeedSelect', function(){
 			this.counter.add(1);
 		}.bind(selector))
 		.setAction(Crafty.keys.SPACE, function(){
+			Crafty.scene('Game', this.counter.value());
+		}.bind(selector))
+		.setAction(Crafty.keys.ENTER, function(){
 			Crafty.scene('Game', this.counter.value());
 		}.bind(selector))
 		.createButton("left", "arrow", -45, 0, function() {
@@ -152,6 +163,7 @@ Crafty.scene('SpeedSelect', function(){
 		.attr({
 			counter: count,
 		})
+		.attach(label)
 		.attach(count)
 		.attr({
 			x: 80,
@@ -161,20 +173,18 @@ Crafty.scene('SpeedSelect', function(){
 
 Crafty.scene('Lose', function() {
     Crafty.e('2D, DOM, Text')
-    .attr({ x: 0, y: 290/2 - 24, w: 352 })
+    .attr({ x: 0, y: 145, w: 160})
     .text('Perdu!')
     .textFont({size: '20px'})
- 
-    // Give'em a round of applause!
-    Crafty.audio.play('applause');
+	.textAlign('center');
  
     // After a short delay, watch for the player to press a key, then restart
     // the game when a key is pressed
     var delay = true;
-    setTimeout(function() { delay = false; }, 5000);
+    setTimeout(function() { delay = false; }, 2000);
     this.restart_game = function() {
         if (!delay) {
-            Crafty.scene('Game');
+            Crafty.scene('SpeedSelect');
         }
     };
     Crafty.bind('KeyDown', this.restart_game);
@@ -190,8 +200,8 @@ function() {
 // -------------
 // Handles the loading of binary assets such as images and audio files
 Crafty.scene('Loading', function(){
-    Crafty.e('2D, DOM, Text')
-    .attr({ x: 90, y: 290/2 - 24, w: 130 })
+    Crafty.e('2D, Canvas, Text')
+    .attr({ x: 80, y: 145, w: 80})
     .text('Loading\nPlease wait...')
     .textFont({size: '20px'})
 	.textAlign('center')

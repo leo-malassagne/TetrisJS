@@ -131,61 +131,7 @@ Crafty.c('Piece', {
 				modifiedLines.push(block.mbr()._y + 8);
 			}
 			Crafty.trigger("Land",modifiedLines);
-			this.construct(Crafty.s('Game').drawPiece());
-			this.attr({x: 80, y: -32});
 		}
-	},
-});
-
-Crafty.c('Selector', {
-    init: function(){
-        this.requires('2D, Keyboard, Delay');
-		var fig = Crafty.e('2D, Canvas, Text')
-					.text('5')
-					.textFont({size: '20px'})
-					.textAlign('center');
-		var lab = Crafty.e('2D, Canvas, Text')
-					.text('')
-					.textFont({size: '20px'})
-					.textAlign('center');
-		this.attach(fig);
-		this.attach(lab);
-		fig.y += 10;
-		lab.y -= 10;
-        this.attr({
-            value: 5,  
-            figure: fig,
-			label: lab,
-			hold: {}
-        });
-		this.bind('KeyDown', function(e){
-			if ((e.key == Crafty.keys.LEFT_ARROW || e.key == Crafty.keys.RIGHT_ARROW) && (!this.cooldown)) {
-				this.hold[e.key] = Crafty.frame()
-				this.setValue(e.key - 38);
-				this.delay(this.holdKey(e.key,this.hold[e.key]),300);
-			}
-		});
-		this.bind('KeyUp', function(e){
-			this.hold[e.key] = null;
-		});
-    },
-	holdKey: function(key,frame) {
-		return function() {
-			console.log(frame, this.hold[key]);
-			if (this.isDown(key) && (frame == this.hold[key])) {
-				this.setValue(key - 38);
-				this.delay(this.holdKey(key,frame),100);
-			}
-		}
-	},
-	setLabel: function(str){
-		this.label.text(str);
-	},
-	setValue: function(factor){
-		if ((this.value + factor > 0) && (this.value + factor < 16)){
-			this.value += factor;
-		}
-		this.figure.text(this.value);
 	},
 });
 
