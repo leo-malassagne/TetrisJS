@@ -7,8 +7,7 @@ Crafty.scene('Game',
 		Crafty.s("Game", {
 			init: function() {
 				this.lineCount = 0;
-				this.track = -1;
-				this.deleteCurrent = false;
+				this.musicChange = false;
 				this.bind('musicEnd', this.playNext);
 				this.bind("Land",function(e){
 					var loop, line, blocks, fullLines = 0, gain = 0;
@@ -41,6 +40,9 @@ Crafty.scene('Game',
 					if (this.lineCount > 10) {
 						this.lineCount = (this.lineCount + fullLines) % 10;
 						Crafty('Counter').get(1).add(1);
+						if ((Crafty('Counter').get(1).value() > 2) && (Crafty('Counter').get(1).value() % 2 ==0)) {
+							this.musicChange = true;
+						}
 					}
 					Crafty("Piece").get(0).construct(this.drawPiece());
 					Crafty("Piece").get(0).attr({x: 80, y: -32});
@@ -50,22 +52,17 @@ Crafty.scene('Game',
 						Crafty("Piece").get(0).fall();
 					}
 				});
-				/*this.playlist.push('level'+Math.ceil(gameSpeed/5));
-				this.playlist.push('transition');
-				soundManager.play('intro');*/
-				soundManager.play('level1');
+				soundManager.play('level' + (Math.floor(Crafty('Counter').get(1).value() / 2) || 1));
 				this.newRandGen();
 			},
 			playNext: function(){
-				soundManager.stop(this.playlist[this.track]);
-				if(this.track>=0&&(this.deleteCurrent||this.playlist[this.track].match(/transition/)!=null)){
-					console.log('delete track',this.deleteCurrent,this.playlist[this.track].match(/transition/)!=null);
-					this.removeTrack(this.track);
-					this.deleteCurrent = false;
-					console.log(this.playlist, this.playlist[this.track]);
+				if (this.musicChange) {
+					this.musicChange = false;
+					soundManager.play('transition');
 				}
-				else this.track = (this.track+1)%this.playlist.length;
-				soundManager.play(this.playlist[this.track]);
+				else {
+					soundManager.play('level' + (Math.floor(Crafty('Counter').get(1).value() / 2) || 1));
+				}
 			},
 			collapse: function() {
 				var base, line, numLine;
@@ -217,7 +214,7 @@ Crafty.scene('Loading', function(){
         },
         "images": ['frame.png']
     };
-    var musics = ['intro','part1','part2','part3','transition1','transition2','transition3','pont','level1','transition'];
+    var musics = ['level1','level2','level3','level4','level5','level6','level7','transition'];
     var sounds = ['fall','roll','slide','touch_down','line_clear1','line_clear2','line_clear3','line_clear4'];
     var tab = [];
     var cnt = 0;
@@ -228,7 +225,7 @@ Crafty.scene('Loading', function(){
             id: music,
             url: 'assets/audio/music/'+music+'.ogg',
             onload: function(){ loadNext();},
-            onfinish: function(){soundManager.play(this.id);}
+            onfinish: function(){Crafty.trigger("musicEnd");}
         });
     };
     for(var i=0; i<sounds.length; i++){
