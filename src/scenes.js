@@ -3,7 +3,7 @@
 Crafty.scene('Game',
 	function(gameSpeed){
 		Crafty.e('Counter').attr({x: 150, y: 10}).textAlign('right').value(0);
-		Crafty.e('Counter').attr({x: 150, y: 30}).textAlign('right').value(gameSpeed);
+		Crafty.e('Counter').attr({x: 150, y: 30}).textAlign('right').value(gameSpeed).setLimits(1,15);
 		Crafty.s("Game", {
 			init: function() {
 				this.lineCount = 0;
@@ -40,7 +40,7 @@ Crafty.scene('Game',
 					if (this.lineCount > 10) {
 						this.lineCount = (this.lineCount + fullLines) % 10;
 						Crafty('Counter').get(1).add(1);
-						if ((Crafty('Counter').get(1).value() > 2) && (Crafty('Counter').get(1).value() % 2 ==0)) {
+						if ((Crafty('Counter').get(1).value()) % 2 ==0 || (Crafty('Counter').get(1).value() == 15)) {
 							this.musicChange = true;
 						}
 					}
@@ -48,20 +48,21 @@ Crafty.scene('Game',
 					Crafty("Piece").get(0).attr({x: 80, y: -32});
 				});
 				this.bind("EnterFrame",function(e){
-					if (e.frame % Math.round(50 / Crafty('Counter').get(1).value()) == 0) {
+					if (e.frame % Math.round(150 / (Crafty('Counter').get(1).value() + 5)) == 0) {
 						Crafty("Piece").get(0).fall();
 					}
 				});
-				soundManager.play('level' + (Math.floor(Crafty('Counter').get(1).value() / 2) || 1));
+				console.log("play Tetris" + (Math.floor(Crafty('Counter').get(1).value() / 2)  + 1));
+				soundManager.play('Tetris' + (Math.floor(Crafty('Counter').get(1).value() / 2) + Math.floor(Crafty('Counter').get(1).value() / 15) + 1));
 				this.newRandGen();
 			},
 			playNext: function(){
 				if (this.musicChange) {
 					this.musicChange = false;
-					soundManager.play('transition');
+					soundManager.play('TetrisTransition');
 				}
 				else {
-					soundManager.play('level' + (Math.floor(Crafty('Counter').get(1).value() / 2) || 1));
+					soundManager.play('Tetris' + (Math.floor(Crafty('Counter').get(1).value() / 2) + Math.floor(Crafty('Counter').get(1).value() / 15) + 1));
 				}
 			},
 			collapse: function() {
@@ -131,6 +132,7 @@ Crafty.scene('Game',
 );
 
 Crafty.scene('SpeedSelect', function(){
+	Crafty.e('2D, DOM').attr({x: 5, y: 5, w: Crafty.viewport.width - 10, h: Crafty.viewport.height - 10}).css({"border": "1px solid", "border-radius": "3px"});
 	var count = Crafty.e("Counter").value(5).setLimits(1,15);
 	var label = Crafty.e("2D, Text, Canvas")
 		.text("Choose speed")
@@ -151,10 +153,10 @@ Crafty.scene('SpeedSelect', function(){
 		.setAction(Crafty.keys.ENTER, function(){
 			Crafty.scene('Game', this.counter.value());
 		}.bind(selector))
-		.createButton("left", "arrow", -45, 0, function() {
+		.createButton("left", "arrow", -45, 0, true, false, function() {
 			this.counter.add(-1);
 		}.bind(selector))
-		.createButton("right", "arrow", 45, 0, function() {
+		.createButton("right", "arrow", 45, 0, false, false, function() {
 			this.counter.add(1);
 		}.bind(selector))
 		.attr({
@@ -203,6 +205,7 @@ Crafty.scene('Loading', function(){
     .textFont({size: '20px'})
 	.textAlign('center')
     Crafty.paths({images: "assets/graphics/", sprites: "assets/graphics/"});
+	Crafty.imageWhitelist.push("png");
     var graphics = {
         "sprites" : {
             'sprites.png' : {
@@ -214,11 +217,11 @@ Crafty.scene('Loading', function(){
         },
         "images": ['frame.png']
     };
-    var musics = ['level1','level2','level3','level4','level5','level6','level7','transition'];
+    var musics = ['Tetris1','Tetris2','Tetris3','Tetris4','Tetris5','Tetris6','Tetris7','Tetris8','Tetris9','TetrisTransition'];
     var sounds = ['fall','roll','slide','touch_down','line_clear1','line_clear2','line_clear3','line_clear4'];
     var tab = [];
     var cnt = 0;
-    for(var i=0; i<musics.length; i++){
+    for(var i=0; i < musics.length; i++){
         var music = musics[i];
         tab.push(music);
         soundManager.createSound({
@@ -228,7 +231,7 @@ Crafty.scene('Loading', function(){
             onfinish: function(){Crafty.trigger("musicEnd");}
         });
     };
-    for(var i=0; i<sounds.length; i++){
+    for(var i=0; i < sounds.length; i++){
         var sound = sounds[i];
         tab.push(sound);
         soundManager.createSound({
@@ -239,11 +242,12 @@ Crafty.scene('Loading', function(){
         });
     };
     var loadNext = function(){
-        if(cnt === tab.length) Crafty.load(graphics,
+        if(cnt === tab.length){
+			Crafty.load(graphics,
             function(){
                 Crafty.scene('SpeedSelect');
-            }
-        );
+            });
+		}
         else{
             soundManager.load(tab[cnt]);
             cnt++;

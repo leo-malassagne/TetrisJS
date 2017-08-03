@@ -168,7 +168,7 @@ Crafty.c("Inputs", {
 		this.actions[key] = action;
 		return this;
 	},
-	createButton: function(name, sprite, posX, posY, action) {
+	createButton: function(name, sprite, posX, posY, flipH, flipV, action) {
 		var ent = Crafty.e("2D, Canvas, Mouse, " + sprite)
 						.attr({
 							label: name
@@ -186,6 +186,12 @@ Crafty.c("Inputs", {
 		this.setAction(name, action);
 		this.attach(ent);
 		ent.shift(posX,posY,0,0);
+		if (flipH) {
+			ent.flip("X");
+		}
+		if (flipV) {
+			ent.flip("Y");
+		}
 		return this;
 	},
 	registerInput: function(input) {
