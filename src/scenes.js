@@ -204,7 +204,7 @@ Crafty.scene('Loading', function(){
     .text('Loading\nPlease wait...')
     .textFont({size: '20px'})
 	.textAlign('center')
-    Crafty.paths({images: location + "assets/graphics/", sprites: location + "assets/graphics/"});
+    Crafty.paths({images: loc + "assets/graphics/", sprites: loc + "assets/graphics/"});
 	Crafty.imageWhitelist.push("png");
     var graphics = {
         "sprites" : {
@@ -226,7 +226,7 @@ Crafty.scene('Loading', function(){
         tab.push(music);
         soundManager.createSound({
             id: music,
-            url: location + 'assets/audio/music/' + music + '.ogg',
+            url: loc + 'assets/audio/music/' + music + '.ogg',
             onload: function(){ loadNext();},
             onfinish: function(){Crafty.trigger("musicEnd");}
         });
@@ -236,7 +236,7 @@ Crafty.scene('Loading', function(){
         tab.push(sound);
         soundManager.createSound({
             id: sound,
-            url: location + 'assets/audio/sounds/' + sound + '.ogg',
+            url: loc + 'assets/audio/sounds/' + sound + '.ogg',
             onload: function(){ loadNext();},
             onfinish: function(){ soundManager.stop(this.id)}
         });
