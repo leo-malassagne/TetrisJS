@@ -2,11 +2,7 @@
 
 Crafty.c('Piece', {
     init: function(){
-		this.requires("2D,Inputs");
-		this.setAction(Crafty.keys.LEFT_ARROW,this.slide(-1).bind(this));
-		this.setAction(Crafty.keys.RIGHT_ARROW,this.slide(1).bind(this));
-		this.setAction(Crafty.keys.UP_ARROW,this.roll.bind(this));
-		this.setAction(Crafty.keys.DOWN_ARROW,this.fall.bind(this));
+		this.requires("2D");
 		this.models = [
 			{
 				width: 4,
@@ -21,33 +17,33 @@ Crafty.c('Piece', {
 				colour: "blue"
 			},
 			{
-				width: 3, 
+				width: 3,
 				height: 3,
 				blocks: [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 1, y: 2}],
 				colour: "brown"
 			},
 			{
-				width: 3, 
+				width: 3,
 				height: 3,
 				blocks: [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 0, y: 2}],
 				colour: "magenta"
 			},
 			{
-				width: 3, 
+				width: 3,
 				height: 3,
 				blocks: [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 2, y: 2}],
 				colour: "white"
 			},
 			{
-				width: 3, 
+				width: 3,
 				height: 3,
-				blocks: [{x: 1, y: 0}, {x: 2, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}],
+				blocks: [{x: 1, y: 1}, {x: 2, y: 1}, {x: 0, y: 2}, {x: 1, y: 2}],
 				colour: "cyan"
 			},
 			{
-				width: 3, 
+				width: 3,
 				height: 3,
-				blocks: [{x: 0, y: 0}, {x: 1, y: 0}, {x: 1, y: 1}, {x: 2, y: 1}],
+				blocks: [{x: 0, y: 1}, {x: 1, y: 1}, {x: 1, y: 2}, {x: 2, y: 2}],
 				colour: "green"
 			}
 		]
@@ -59,36 +55,63 @@ Crafty.c('Piece', {
 						.attr({
 							x: this._x,
 							y: this._y,
-							w: model.width * 16,
-							h: model.height * 16
+							w: model.width * blockSize,
+							h: model.height * blockSize
 						})
 						.origin("middle");
-		this.rollHitbox = Crafty.e("2D")
+		this.rollHitbox = Crafty.e("2D,Canvas")
 						.attr({
 							x: this._x,
 							y: this._y,
-							w: model.width * 16,
-							h: model.height * 16
+							w: model.width * blockSize,
+							h: model.height * blockSize
 						})
 						.origin("middle");
 		this.attach(this.wheel);
 		this.attach(this.rollHitbox);
 		for (block of model.blocks) {
-			this.wheel.attach(Crafty.e("2D,Canvas," + model.colour).attr({x: this._x + (block.x * 16), y: this._y + (block.y * 16)}));
-			this.rollHitbox.attach(Crafty.e("2D,Collision,Canvas,SolidHitbox").attr({x: this._x + (block.x * 16), y: this._y + (block.y * 16), w: 16, h: 16}));
+			this.wheel.attach(Crafty.e("2D,Canvas,block")
+                                .attr({x: this._x + (block.x * blockSize), y: this._y + (block.y * blockSize), z: 2, w: blockSize, h: blockSize})
+                                .attach(Crafty.e("2D,Canvas,Color")
+                                            .color(model.colour)
+                                            .attr({x: this._x + (block.x * blockSize), y: this._y + (block.y * blockSize), z: 1, w: blockSize, h: blockSize})
+                                )
+                                .origin("middle")
+                            );
+			this.rollHitbox.attach(Crafty.e("2D,Collision,Canvas,SolidHitbox")
+                                    .attr({x: this._x + (block.x * blockSize), y: this._y + (block.y * blockSize), w: blockSize, h: blockSize}));
 		}
 		this.rollHitbox.rotation += 90;
 		return this;
 	},
+    copy: function(piece) {
+        piece.wheel.attr({x: this._x, y: this._y});
+        piece.rollHitbox.attr({x: this._x, y: this._y});
+        this.wheel = piece.wheel;
+        this.rollHitbox = piece.rollHitbox;
+        this.attach(this.wheel);
+        this.attach(this.rollHitbox);
+        return this;
+    },
+    break: function() {
+        this.detach(this.wheel);
+        this.detach(this.rollHitbox);
+        this.wheel = null;
+        this.rollHitbox = null;
+        return this;
+    },
+    center: function(position) {
+        this.attr({x: position.x - (this.wheel._w / 2), y: position.y - (this.wheel._h / 2)});
+    },
 	slide: function(direction){
 		return function() {
 			var block, canMove = true;
 			for (block of this.wheel._children) {
-				console.log(block.mbr()._x + 8, block.mbr()._y + 8);
-				canMove = canMove && (Crafty.raycast({_x: block.mbr()._x + 8, _y: block.mbr()._y + 8}, {x: direction, y: 0}, 16, "Fixed").length == 0);
+				console.log(block.mbr()._x + (blockSize / 2), block.mbr()._y + (blockSize / 2));
+				canMove = canMove && (Crafty.raycast({_x: block.mbr()._x + (blockSize / 2), _y: block.mbr()._y + (blockSize / 2)}, {x: direction, y: 0}, blockSize, "Fixed").length == 0);
 			}
 			if (canMove) {
-				this.shift(16 * direction,0,0,0);
+				this.shift(blockSize * direction,0,0,0);
 				soundManager.play('slide');
 			}
 			else {
@@ -103,7 +126,10 @@ Crafty.c('Piece', {
 			canMove = canMove && !block.hit("Fixed");
 		}
 		if (canMove) {
-			this.wheel.rotation += 90;
+			this.wheel.rotation += 90
+            for (block of this.wheel._children) {
+    			block.rotation -= 90;
+    		}
 			this.rollHitbox.rotation += 90;
 			soundManager.play('roll');
 		}
@@ -114,10 +140,10 @@ Crafty.c('Piece', {
 	fall: function(){
 		var block, canMove = true;
 		for (block of this.wheel._children) {
-			canMove = canMove && (Crafty.raycast({_x: block.mbr()._x + 8, _y: block.mbr()._y + 8}, {x: 0, y: 1}, 16, "Fixed").length == 0);
+			canMove = canMove && (Crafty.raycast({_x: block.mbr()._x + (blockSize / 2), _y: block.mbr()._y + (blockSize / 2)}, {x: 0, y: 1}, blockSize, "Fixed").length == 0);
 		}
 		if (canMove) {
-			this.shift(0,16,0,0);
+			this.shift(0,blockSize,0,0);
 		}
 		else {
 			var modifiedLines = [];
@@ -127,8 +153,8 @@ Crafty.c('Piece', {
 			this.rollHitbox.destroy();
 			for (block of this.wheel._children) {
 				block.addComponent('Fixed,Collision');
-			if (!modifiedLines.includes(block.mbr()._y + 8))
-				modifiedLines.push(block.mbr()._y + 8);
+			if (!modifiedLines.includes(block.mbr()._y + (blockSize / 2)))
+				modifiedLines.push(block.mbr()._y + (blockSize / 2));
 			}
 			Crafty.trigger("Land",modifiedLines);
 		}
@@ -143,7 +169,7 @@ Crafty.c("Inputs", {
 			inputs: {},
 			actions: {owner: this},
 		});
-		
+
 	},
 	events: {
 		"KeyDown": function(e) {
@@ -185,7 +211,8 @@ Crafty.c("Inputs", {
 						});
 		this.setAction(name, action);
 		this.attach(ent);
-		ent.shift(posX,posY,0,0);
+        ent.attr({w: 20, h: 20})
+		ent.shift(posX, posY, 0, 0);
 		if (flipH) {
 			ent.flip("X");
 		}

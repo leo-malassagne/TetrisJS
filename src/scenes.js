@@ -2,8 +2,11 @@
 
 Crafty.scene('Game',
 	function(gameSpeed){
-		Crafty.e('Counter').attr({x: 150, y: 10}).textAlign('right').value(0);
-		Crafty.e('Counter').attr({x: 150, y: 30}).textAlign('right').value(gameSpeed).setLimits(1,15);
+		Crafty.e("2D,Canvas,Text").text("Next").attr({x: (blockSize * 16.5), y: (blockSize * 1) + 5}).textAlign('center').textFont({size: "20px"});
+		Crafty.e("2D,Canvas,Text").text("Score").attr({x: (blockSize * 16.5), y: (blockSize * 7) + 5}).textAlign('center').textFont({size: "20px"});
+		Crafty.e('Counter').attr({x: (blockSize * 16.5), y: (blockSize * 8) + 5}).textAlign('center').value(0);
+		Crafty.e("2D,Canvas,Text").text("Speed").attr({x: (blockSize * 16.5), y: (blockSize * 10) + 5}).textAlign('center').textFont({size: "20px"});
+		Crafty.e('Counter').attr({x: (blockSize * 16.5), y: (blockSize * 11) + 5}).textAlign('center').value(gameSpeed).setLimits(1,15);
 		Crafty.s("Game", {
 			init: function() {
 				this.lineCount = 0;
@@ -18,7 +21,7 @@ Crafty.scene('Game',
 							Crafty.scene("Lose");
 							return 0;
 						}
-						blocks = Crafty.raycast({_x: 8, _y: line}, {x: 1, y: 0}, 144, "Fixed");
+						blocks = Crafty.raycast({_x: (blockSize / 2)  + (blockSize * 2), _y: line}, {x: 1, y: 0}, blockSize * 9, "Fixed");
 						if (blocks.length == 10) {
 							fullLines++;
 							blocks.forEach(function(block) {
@@ -36,25 +39,34 @@ Crafty.scene('Game',
 						Crafty("Counter").get(0).add(gain);
 						soundManager.play("line_clear" + fullLines);
 					}
-					this.lineCount += fullLines;
-					if (this.lineCount > 10) {
-						this.lineCount = (this.lineCount + fullLines) % 10;
-						Crafty('Counter').get(1).add(1);
-						if ((Crafty('Counter').get(1).value()) % 2 ==0 || (Crafty('Counter').get(1).value() == 15)) {
-							this.musicChange = true;
+					if (Crafty('Counter').get(1).value() < 15) {
+						this.lineCount += fullLines;
+						if (this.lineCount > 10) {
+							this.lineCount = (this.lineCount + fullLines) % 10;
+							Crafty('Counter').get(1).add(1);
+							if ((Crafty('Counter').get(1).value()) % 2 ==0 || (Crafty('Counter').get(1).value() == 15)) {
+								this.musicChange = true;
+							}
 						}
 					}
-					Crafty("Piece").get(0).construct(this.drawPiece());
-					Crafty("Piece").get(0).attr({x: 80, y: -32});
+					Crafty("Piece").get(0)
+					.break()
+					.attr({x: (blockSize * 5) + (blockSize * 2), y: -2 * blockSize})
+					.copy(Crafty("Piece").get(1));
+					Crafty("Piece").get(1)
+					.construct(this.drawPiece())
+					.center({x: blockSize * 16.5, y: blockSize * 3.5});
 				});
 				this.bind("EnterFrame",function(e){
-					if (e.frame % Math.round(150 / (Crafty('Counter').get(1).value() + 5)) == 0) {
+					if (e.frame % Math.round(150 / (Crafty('Counter').get(1).value() + 10)) == 0) {
 						Crafty("Piece").get(0).fall();
 					}
 				});
 				console.log("play Tetris" + (Math.floor(Crafty('Counter').get(1).value() / 2)  + 1));
 				soundManager.play('Tetris' + (Math.floor(Crafty('Counter').get(1).value() / 2) + Math.floor(Crafty('Counter').get(1).value() / 15) + 1));
 				this.newRandGen();
+				Crafty("Piece").get(1).construct(this.drawPiece())
+				.center({x: blockSize * 16.5, y: blockSize * 3.});
 			},
 			playNext: function(){
 				if (this.musicChange) {
@@ -67,27 +79,28 @@ Crafty.scene('Game',
 			},
 			collapse: function() {
 				var base, line, numLine;
-				base = 360;
+				base = blockSize * 22.5;
 				do {
-					base -= 16;
-					line = Crafty.raycast({_x: 8, _y: base}, {x: 1, y: 0}, 144, "Fixed");
+					base -= blockSize;
+					line = Crafty.raycast({_x: (blockSize / 2)  + (blockSize * 2), _y: base}, {x: 1, y: 0}, blockSize * 9, "Fixed");
+					console.log(line);
 				} while ((line.length > 0) && (base > 0));
 				console.log(base);
-				numLine = 16;
+				numLine = blockSize;
 				while (base - numLine > 0) {
-					line = Crafty.raycast({_x: 8, _y: base - numLine}, {x: 1, y: 0}, 144, "Fixed");
+					line = Crafty.raycast({_x: (blockSize / 2)  + (blockSize * 2), _y: base - numLine}, {x: 1, y: 0}, blockSize * 9, "Fixed");
+					console.log(line);
 					if (line.length > 0) {
 						line.forEach(function(block){
 							block.obj.shift(0, numLine, 0, 0);
 						});
-						base -=16;
-						numLine -= 16;
+						base -= blockSize;
+						numLine -= blockSize;
 					}
-					numLine += 16;
+					numLine += blockSize;
 				}
 			},
 			newRandGen: function() {
-				console.log(this);
 				var j, temp;
 				this.randGen = [];
 				for (let i = 0; i < 7; i++) {
@@ -116,23 +129,49 @@ Crafty.scene('Game',
 		},
 		{speed: gameSpeed}
 		);
-		Crafty.s('Game');
-		Crafty.e('Piece')
+		Crafty.e('Piece, Inputs')
 		.construct(6)
-		.attr({x: 80, y: -32});
+		.attr({x: (blockSize * 5)  + (blockSize * 2), y: -2 * blockSize})
+		.setAction(Crafty.keys.LEFT_ARROW,Crafty("Piece").get(0).slide(-1).bind(Crafty("Piece").get(0)))
+		.setAction(Crafty.keys.RIGHT_ARROW,Crafty("Piece").get(0).slide(1).bind(Crafty("Piece").get(0)))
+		.setAction(Crafty.keys.UP_ARROW,Crafty("Piece").get(0).roll.bind(Crafty("Piece").get(0)))
+		.setAction(Crafty.keys.DOWN_ARROW,Crafty("Piece").get(0).fall.bind(Crafty("Piece").get(0)))
+        .setAction(Crafty.keys.SPACE,function(){
+			var vol = 25;
+			Crafty.pause();
+			if (!Crafty.isPaused()) {
+				vol *= 4;
+			}
+			soundManager.setVolume('Tetris' + (Math.floor(Crafty('Counter').get(1).value() / 2) + Math.floor(Crafty('Counter').get(1).value() / 15) + 1), vol);
+		});
+		Crafty.e('Piece')
+		.attr({x: (blockSize * 15), y: blockSize * 2});
+		Crafty.s('Game');
 		Crafty.e('2D,Collision,Fixed')
-		.attr({x: -16, y: 0, w: 16, h: 352});
+		.attr({x: -blockSize  + (blockSize * 2), y: 0, w: blockSize, h: 22 * blockSize});
 		Crafty.e('2D,Collision,Fixed')
-		.attr({x: 160, y: 0, w: 16, h: 352});
+		.attr({x: (10 * blockSize)  + (blockSize * 2), y: 0, w: blockSize, h: 22 * blockSize});
 		Crafty.e('2D,Collision,Fixed')
-		.attr({x: 0, y: 352, w: 160, h: 16});
+		.attr({x: blockSize * 2, y: 22 * blockSize, w: 10 * blockSize, h: blockSize});
 	},
 	function() {
 	}
 );
 
 Crafty.scene('SpeedSelect', function(){
-	Crafty.e('2D, DOM').attr({x: 5, y: 5, w: Crafty.viewport.width - 10, h: Crafty.viewport.height - 10}).css({"border": "1px solid", "border-radius": "3px"});
+	Crafty.background("url('assets/graphics/block.png') top left/" + blockSize + "px " + blockSize + "px repeat lightgray");
+	Crafty.e('2D,Canvas,Color,Persist')
+		.color("white")
+		.attr({x: blockSize * 2, y: 0, w: blockSize * 10, h: blockSize * 22});
+	Crafty.e('2D,Canvas,Color,Persist')
+		.color("white")
+		.attr({x: blockSize * 14, y: blockSize, w: blockSize * 5, h: blockSize * 5});
+	Crafty.e('2D,Canvas,Color,Persist')
+		.color("white")
+		.attr({x: blockSize * 14, y: blockSize * 7, w: blockSize * 5, h: blockSize * 2});
+	Crafty.e('2D,Canvas,Color,Persist')
+		.color("white")
+		.attr({x: blockSize * 14, y: blockSize * 10, w: blockSize * 5, h: blockSize * 2});
 	var count = Crafty.e("Counter").value(5).setLimits(1,15);
 	var label = Crafty.e("2D, Text, Canvas")
 		.text("Choose speed")
@@ -165,18 +204,18 @@ Crafty.scene('SpeedSelect', function(){
 		.attach(label)
 		.attach(count)
 		.attr({
-			x: 80,
-			y: 176
+			x: blockSize * 7,
+			y: blockSize * 11
 		});
 });
 
 Crafty.scene('Lose', function() {
     Crafty.e('2D, DOM, Text')
-    .attr({ x: 0, y: 145, w: 160})
+    .attr({x: blockSize * 7, y: blockSize * 11})
     .text('Perdu!')
     .textFont({size: '20px'})
 	.textAlign('center');
- 
+
     // After a short delay, watch for the player to press a key, then restart
     // the game when a key is pressed
     var delay = true;
@@ -194,28 +233,39 @@ function() {
     // multiple restarts of the game
     this.unbind('KeyDown', this.restart_game);
 });
- 
+
 // Loading scene
 // -------------
 // Handles the loading of binary assets such as images and audio files
 Crafty.scene('Loading', function(){
+	Crafty.background("url('assets/graphics/block.png') top left/" + blockSize + "px " + blockSize + "px repeat #555555");
     Crafty.e('2D, Canvas, Text')
-    .attr({ x: 80, y: 145, w: 80})
-    .text('Loading\nPlease wait...')
+    .attr({ x: Crafty.viewport.width / 2 , y: (Crafty.viewport.width / 2) - 10})
+    .text('Loading')
     .textFont({size: '20px'})
-	.textAlign('center')
-    Crafty.paths({images: loc + "assets/graphics/", sprites: loc + "assets/graphics/"});
+	.textColor("white")
+	.textAlign('center');
+	Crafty.e('2D, Canvas, Text')
+    .attr({ x: Crafty.viewport.width / 2 , y: (Crafty.viewport.width / 2) + 10})
+    .text('Please wait...')
+    .textFont({size: '20px'})
+	.textColor("white")
+	.textAlign('center');
+    Crafty.paths({images: loc + "assets/graphics/"});
 	Crafty.imageWhitelist.push("png");
     var graphics = {
         "sprites" : {
-            'sprites.png' : {
-                "tile" : 16,
-                "tileh" : 16,
-                "map" : { "red": [0,0], "blue": [1, 0], "brown": [2,0], "magenta": [3,0],
-                         "white": [0, 1], "cyan": [1, 1], "green": [2,1], "arrow": [3,1]} 
+            'arrow.png' : {
+                "tile" : 32,
+                "tileh" : 32,
+                "map" : {"arrow": [0, 0]}
+            },
+			'block.png' : {
+                "tile" : 32,
+                "tileh" : 32,
+                "map" : { "block": [0, 0]}
             }
-        },
-        "images": ['frame.png']
+        }
     };
     var musics = ['Tetris1','Tetris2','Tetris3','Tetris4','Tetris5','Tetris6','Tetris7','Tetris8','Tetris9','TetrisTransition'];
     var sounds = ['fall','roll','slide','touch_down','line_clear1','line_clear2','line_clear3','line_clear4'];
