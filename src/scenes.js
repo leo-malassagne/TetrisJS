@@ -159,7 +159,7 @@ Crafty.scene('Game',
 );
 
 Crafty.scene('SpeedSelect', function(){
-	Crafty.background("url(" + loc + "'assets/graphics/block.png') top left/" + blockSize + "px " + blockSize + "px repeat lightgray");
+	Crafty.background("url('" + loc + "assets/graphics/block.png') top left/" + blockSize + "px " + blockSize + "px repeat lightgray");
 	Crafty.e('2D,Canvas,Color,Persist')
 		.color("white")
 		.attr({x: blockSize * 2, y: 0, w: blockSize * 10, h: blockSize * 22});
@@ -238,7 +238,7 @@ function() {
 // -------------
 // Handles the loading of binary assets such as images and audio files
 Crafty.scene('Loading', function(){
-	Crafty.background("url(" + loc + "'assets/graphics/block.png') top left/" + blockSize + "px " + blockSize + "px repeat #555555");
+	Crafty.background("url('" + loc + "assets/graphics/block.png') top left/" + blockSize + "px " + blockSize + "px repeat #555555");
     Crafty.e('2D, Canvas, Text')
     .attr({ x: Crafty.viewport.width / 2 , y: (Crafty.viewport.width / 2) - 10})
     .text('Loading')
